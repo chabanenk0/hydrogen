@@ -54,8 +54,8 @@ MidiMap::MidiMap()
 	for(int note = 0; note < 128; note++ ) {
 		__note_array[ note ] = new MidiAction("NOTHING");
 		__cc_array[ note ] = new MidiAction("NOTHING");
+		__pc_array[ note ] = new MidiAction("NOTHING");
 	}
-	__pc_action = new MidiAction("NOTHING");
 }
 
 MidiMap::~MidiMap()
@@ -71,8 +71,8 @@ MidiMap::~MidiMap()
 	for( int i = 0; i < 128; i++ ) {
 		delete __note_array[ i ];
 		delete __cc_array[ i ];
+		delete __pc_array[ i ];
 	}
-	delete __pc_action;
 
 	__instance = NULL;
 }
@@ -111,6 +111,7 @@ void MidiMap::reset()
 		delete __cc_array[ i ];
 		__note_array[ i ] = new MidiAction("NOTHING");
 		__cc_array[ i ] = new MidiAction("NOTHING");
+		__pc_array[ i ] = new MidiAction("NOTHING");
 	}
 
 }
@@ -164,10 +165,12 @@ void MidiMap::registerCCEvent( int parameter , MidiAction * pAction ){
 /**
  * Sets up the relation between a program change and an action
  */
-void MidiMap::registerPCEvent( MidiAction * pAction ){
+void MidiMap::registerPCEvent(int programNumber, MidiAction * pAction ){
 	QMutexLocker mx(&__mutex);
-	delete __pc_action;
-	__pc_action = pAction;
+	if( programNumber >= 0 && programNumber < 128 ) {
+		delete __pc_array[ programNumber ];
+		__pc_array[ programNumber ] = pAction;
+	}
 }
 
 /**
@@ -205,9 +208,9 @@ MidiAction * MidiMap::getCCAction( int parameter )
 /**
  * Returns the pc action which was linked to the given event.
  */
-MidiAction * MidiMap::getPCAction()
+MidiAction * MidiMap::getPCAction(int programNumber)
 {
 	QMutexLocker mx(&__mutex);
-	return __pc_action;
+	return __pc_array[ programNumber ];
 }
 
